@@ -1,0 +1,134 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Categories;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+class CategoryController extends Controller
+{
+
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        //$category = new Categories;
+        //$category->all();
+        $categories = Categories::all();
+        //dd($categories);
+        return view('category/categoryIndex', compact('categories'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('category/categoryCreate');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'name' => 'required|max:30|min:3',
+                'description' => 'required|min:7',
+                'image' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048'
+            ],
+            [
+                'name.required' => 'O nome deve ser preenchido',
+                'name.max' => 'O tamanho máximo é 30 caracteres',
+                'name.min' => 'O tamanho mínimo é 3 caracteres',
+                'description.required' => 'A descrição deve ser preenchida',
+                'description.min' => 'A descrição deve ter no mínimo 7 caracteres '
+            ]
+        );
+        if ($validate->fails()) {
+            return redirect()->back()
+                ->withErrors($validate)
+                ->withInput();
+        } else {
+            if ($request->hasFile('image')) {
+               $path = $request->file('image')->store('categories', 'public');  
+            }else{
+                $path='NA';
+            }
+
+            $create = Categories::create([
+                'name' => $request->input('name'),
+                'description' => $request->input('description'),
+                'image'=>$path
+            ]);
+            if ($create) {
+                return redirect()->route('category.index');
+            } else {
+                return redirect()->back()->with('message', 'Erro na insercao');
+            }
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $category = Categories::findOrFail($id);
+        //dd($category);
+        return view('category/categoryShow', compact('category'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $category = Categories::findOrFail($id);
+        //dd($category);
+        return view('category/categoryEdit', compact('category'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $request->validate([
+                'title' => 'required|max:50|min:3',
+                'description' => 'required|min:7',
+                'points' => 'required|numeric|max:10|min:1'
+        ]);
+        $path=null;
+        if ($request->hasFile('image')) {
+               $path = $request->file('image')->store('categories', 'public');  
+        }
+        $category = Categories::findOrFail($id);
+        $category->name = $request->input('name');
+        $category->description = $request->input('description');
+        if(isset($path)){
+            $category->image=$path;
+        }
+        $category->save();
+       
+        if ($category->wasChanged()) {
+            return redirect()->route('category.index');
+        } else {
+            return redirect()->back()->with('message', 'Erro na atualizacao');
+        }
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $category = Categories::findOrFail($id);
+        $category->delete();
+        return redirect()->route('category.index');
+    }
+}
