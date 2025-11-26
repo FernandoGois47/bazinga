@@ -62,6 +62,11 @@
                         👤 Ações de Usuários
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{route('reward.index')}}" class="nav-link text-white">
+                        <span>💰 Recompensas</span>
+                    </a>
+                </li>
             </ul>
         </div>
 
